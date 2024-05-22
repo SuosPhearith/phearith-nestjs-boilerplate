@@ -7,7 +7,11 @@ import * as express from 'express';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.use('/uploads', express.static('uploads'));
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+    }),
+  );
   //::==>> Enable CORS
   app.enableCors({
     origin: [
