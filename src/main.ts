@@ -12,7 +12,7 @@ async function bootstrap() {
       whitelist: true,
     }),
   );
-  //::==>> Enable CORS
+  // Enable CORS
   app.enableCors({
     origin: [
       process.env.ORIGIN_URL_1,

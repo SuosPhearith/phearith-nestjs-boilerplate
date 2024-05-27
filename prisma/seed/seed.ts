@@ -11,12 +11,14 @@ import { roles } from './role.seed';
 import { users } from './user.seed';
 //::================================================================================::
 
-//::==>> initialize Prisma Client
+// initialize Prisma Client
 
 const prisma = new PrismaClient();
 
 async function main() {
   //::================================>>Delete data<<=================================::
+  await prisma.log.deleteMany();
+  await prisma.userSession.deleteMany();
   await prisma.user.deleteMany();
   await prisma.role.deleteMany();
   //::================================================================================::
@@ -44,7 +46,7 @@ async function main() {
   console.log('===============================');
 }
 
-//::==>> execute the main function
+// execute the main function
 
 main()
   .catch((e) => {
@@ -54,7 +56,7 @@ main()
   })
 
   .finally(async () => {
-    //::==>> close Prisma Client at the end
+    // close Prisma Client at the end
 
     await prisma.$disconnect();
   });

@@ -19,9 +19,9 @@ export class EmployeeService {
     createEmployeeDTO: CreateEmployeeDTO,
   ): Promise<ResponseCreateOrUpdateDTO> {
     try {
-      //::==>>hash password
+      //hash password
       const hashedPassword = await bcrypt.hash(createEmployeeDTO.password, 10);
-      //::==>>apply hash password
+      //apply hash password
       const savedUser = {
         ...createEmployeeDTO,
         password: hashedPassword,
@@ -30,9 +30,9 @@ export class EmployeeService {
       const newUser = await this.prisma.user.create({
         data: savedUser,
       });
-      //::==>>remove field password
+      //remove field password
       newUser.password = undefined;
-      //::==>>response back
+      //response back
       const response: ResponseCreateOrUpdateDTO = {
         data: newUser,
         message: 'Created successfully',
@@ -40,7 +40,7 @@ export class EmployeeService {
       };
       return response;
     } catch (error) {
-      //::==>>check if duplicate
+      //check if duplicate
       if (error.code === 'P2002')
         throw new ConflictException('Email already exists');
       throw error;
@@ -53,10 +53,10 @@ export class EmployeeService {
     key: string = '',
   ): Promise<any> {
     try {
-      //::==>> Calculate the offset for pagination
+      // Calculate the offset for pagination
       const skip = (page - 1) * pageSize;
 
-      //::==>> Build the search criteria conditionally
+      // Build the search criteria conditionally
       const where: any = {
         roleId: Role.employee,
       };
@@ -68,13 +68,13 @@ export class EmployeeService {
         ];
       }
 
-      //::==>> Get the total count of users matching the criteria
+      // Get the total count of users matching the criteria
       const totalCount = await this.prisma.user.count({ where });
 
-      //::==>> Calculate total pages
+      // Calculate total pages
       const totalPages = Math.ceil(totalCount / pageSize);
 
-      //::==>> Get the users with pagination and search criteria
+      // Get the users with pagination and search criteria
       const data = await this.prisma.user.findMany({
         where,
         select: {
@@ -91,7 +91,7 @@ export class EmployeeService {
         take: +pageSize,
       });
 
-      //::==>> Return the response with pagination details
+      // Return the response with pagination details
       return {
         data,
         totalCount: +totalCount,
@@ -106,7 +106,7 @@ export class EmployeeService {
 
   async findOne(id: number): Promise<any> {
     try {
-      //::==>> find user by id
+      // find user by id
       const user = await this.prisma.user.findUnique({
         where: { id, roleId: Role.employee },
         select: {
@@ -121,12 +121,12 @@ export class EmployeeService {
           role: true,
         },
       });
-      //::==>> validate if user not found
+      // validate if user not found
       if (!user)
         throw new NotFoundException(`Employee with id: ${id} not found`);
-      //::==>> check account is valid
+      // check account is valid
       if (!user.status) return { message: 'Account was ban!' };
-      //::==>> response back
+      // response back
       return user;
     } catch (error) {
       throw error;
@@ -138,11 +138,11 @@ export class EmployeeService {
     updateEmployeeDTO: UpdateEmployeeDTO,
   ): Promise<ResponseCreateOrUpdateDTO> {
     try {
-      //::==>>hash password
+      //hash password
       const hashedPassword = await bcrypt.hash(updateEmployeeDTO.password, 10);
-      //::==>> find user by id
+      // find user by id
       const user = await this.findOne(id);
-      //::==>> start update
+      // start update
       const updateUser = await this.prisma.user.update({
         where: {
           id: user.id,
@@ -150,14 +150,14 @@ export class EmployeeService {
         data: { ...updateEmployeeDTO, password: hashedPassword },
       });
       delete updateUser.password;
-      //::==>>response back
+      //response back
       return {
         data: updateUser,
         message: 'Updated successfully',
         statusCode: HttpStatus.OK,
       };
     } catch (error) {
-      //::==>>check if duplicate
+      //check if duplicate
       if (error.code === 'P2002')
         throw new ConflictException('Email already exists');
       throw error;
@@ -166,18 +166,18 @@ export class EmployeeService {
 
   async remove(id: number): Promise<any> {
     try {
-      //::==>> find user by id
+      // find user by id
       const user = await this.findOne(id);
-      //::==>> validation
+      // validation
       if (user.email === process.env.SUPER_ADMIN_EMAIL)
         throw new BadRequestException('Can not remove Super admin account');
-      //::==>> start update
+      // start update
       await this.prisma.user.delete({
         where: {
           id: user.id,
         },
       });
-      //::==>>response back
+      //response back
       return {
         message: 'Deleted successfully',
         statusCode: HttpStatus.OK,
@@ -189,9 +189,9 @@ export class EmployeeService {
 
   async toggleActive(id: number, me: any): Promise<any> {
     try {
-      //::==>> check is valid id
+      // check is valid id
       const user = await this.findOne(id);
-      //::==>> validation
+      // validation
       if (me.id === id)
         throw new BadRequestException('Can not ban own account');
       if (user.email === process.env.SUPER_ADMIN_EMAIL)

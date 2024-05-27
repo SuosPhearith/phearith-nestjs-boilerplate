@@ -1,4 +1,15 @@
-import { Controller, Post, Body, Get, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  UseGuards,
+  Req,
+  Query,
+  Patch,
+  Delete,
+  Param,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { SingInDTO } from './dto/sign-in.dto';
@@ -32,10 +43,56 @@ export class AuthController {
     return user;
   }
 
+  @Get('getLog/getAll')
+  @Roles(Role.admin, Role.employee)
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  getLog(
+    @Query('page') page: number = 1,
+    @Query('pageSize') pageSize: number = 10,
+    @Req() { user },
+  ) {
+    return this.authService.getLog(page, pageSize, user);
+  }
+
+  @Get('getSession/getAll')
+  @Roles(Role.admin, Role.employee)
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  getSession(
+    @Query('page') page: number = 1,
+    @Query('pageSize') pageSize: number = 10,
+    @Req() { user },
+  ) {
+    return this.authService.getSession(page, pageSize, user);
+  }
+
+  @Patch('account/logoutAllDevices')
+  @Roles(Role.admin, Role.employee)
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  logoutAllDevices(@Req() { user }) {
+    return this.authService.logoutAllDevices(user);
+  }
+
+  @Delete('account/logoutDevice/:sessionToken')
+  @Roles(Role.admin, Role.employee)
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  logoutDevice(@Param('sessionToken') sessionToken: string) {
+    return this.authService.logoutDevice(sessionToken);
+  }
+
+  @Delete('logout')
+  @Roles(Role.admin, Role.employee)
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  logout(@Req() { session }) {
+    return this.authService.logout(session);
+  }
+
   @Get('onlyAdmin')
   @Roles(Role.admin, Role.employee)
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   onlyAdmin() {
     return 'You are admin or principal.';
   }
+
+  // change password
+  // update profile
 }

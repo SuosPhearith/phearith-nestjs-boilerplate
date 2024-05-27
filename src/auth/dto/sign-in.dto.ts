@@ -7,4 +7,7 @@ export class SingInDTO {
 
   @IsNotEmpty()
   readonly password: string;
+
+  @IsNotEmpty()
+  readonly userAgent: string;
 }

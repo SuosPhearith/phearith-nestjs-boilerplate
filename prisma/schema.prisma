@@ -19,15 +19,38 @@ model Role {
 }
 
 model User {
+  id          Int           @id @default(autoincrement())
+  name        String
+  email       String        @unique
+  password    String
+  role        Role          @relation(fields: [roleId], references: [id])
+  roleId      Int
+  status      Boolean       @default(true)
+  avatar      String?
+  gender      Gender
+  session     Int           @default(1)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  Log         Log[]
+  UserSession UserSession[]
+}
+
+model Log {
   id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role     @relation(fields: [roleId], references: [id])
-  roleId    Int
-  status    Boolean  @default(true)
-  avatar    String?
-  gender    Gender
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  device    String
+  browser   String
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+}
+
+model UserSession {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  sessionToken String   @unique @default(uuid())
+  device       String
+  browser      String
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
 }
