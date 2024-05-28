@@ -17,12 +17,15 @@ import { User } from '@prisma/client';
 import { ResponseDeleteDTO } from 'src/global/dto/response.delete.dto';
 import { ChangePasswordDTO } from './dto/change-password.dto';
 import { UpdateProfileDTO } from './dto/update-profile.dto';
+import { FileUploadService } from 'src/file/file-upload.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private fileUplaodService: FileUploadService,
+    private readonly fileUploadService: FileUploadService,
   ) {}
   async signUp(
     createAuthDto: CreateAuthDto,
@@ -364,6 +367,34 @@ export class AuthService {
       //check if duplicate
       if (error.code === 'P2002')
         throw new ConflictException('Email already exists');
+      throw error;
+    }
+  }
+
+  async uploadAvatar(file: any, user: User): Promise<any> {
+    try {
+      // Use the FileUploadService here
+      const result = this.fileUploadService.handleFileUpload(file);
+      // check is user is valid
+      const oldUser = await this.prisma.user.findUnique({
+        where: { id: user.id },
+      });
+      if (!oldUser) throw new UnauthorizedException();
+      // start update
+      await this.prisma.user.update({
+        where: {
+          id: oldUser.id,
+        },
+        data: {
+          avatar: result.path,
+        },
+      });
+      // response back
+      return {
+        message: 'Updated succesfully!',
+        statusCode: HttpStatus.OK,
+      };
+    } catch (error) {
       throw error;
     }
   }
