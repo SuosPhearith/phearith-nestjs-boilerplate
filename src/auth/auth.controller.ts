@@ -9,6 +9,8 @@ import {
   Patch,
   Delete,
   Param,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
@@ -17,6 +19,12 @@ import { AuthenticationGuard } from './guards/authentication/authentication.guar
 import { Roles } from './decorators/roles/roles.decorator';
 import { AuthorizationGuard } from './guards/authorization/authorization.guard';
 import { Role } from 'src/global/enum/role.enum';
+import { ChangePasswordDTO } from './dto/change-password.dto';
+import { UpdateProfileDTO } from './dto/update-profile.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { File as MulterFile } from 'multer';
+import { multerConfig } from 'src/config/multer.config';
+import { FileImagePipe } from 'src/file/validation/file-image.pipe';
 
 @Controller('api/auth')
 export class AuthController {
@@ -86,13 +94,35 @@ export class AuthController {
     return this.authService.logout(session);
   }
 
+  @Patch('changePassword')
+  @UseGuards(AuthenticationGuard)
+  changePassword(
+    @Body() changePasswordDTO: ChangePasswordDTO,
+    @Req() { user },
+  ) {
+    return this.authService.changePassword(changePasswordDTO, user);
+  }
+
+  @Patch('updateProfile')
+  @UseGuards(AuthenticationGuard)
+  updateProfile(@Body() updateProfileDTO: UpdateProfileDTO, @Req() { user }) {
+    return this.authService.updateProfile(updateProfileDTO, user);
+  }
+
+  @Post('uploadAvatar')
+  @UseGuards(AuthenticationGuard)
+  @UseInterceptors(FileInterceptor('file', multerConfig))
+  async uploadAvatar(
+    @UploadedFile(FileImagePipe) file: MulterFile,
+    @Req() { user },
+  ) {
+    return this.authService.uploadAvatar(file, user);
+  }
+
   @Get('onlyAdmin')
   @Roles(Role.admin, Role.employee)
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   onlyAdmin() {
     return 'You are admin or principal.';
   }
-
-  // change password
-  // update profile
 }
