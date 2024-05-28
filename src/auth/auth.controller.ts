@@ -17,6 +17,8 @@ import { AuthenticationGuard } from './guards/authentication/authentication.guar
 import { Roles } from './decorators/roles/roles.decorator';
 import { AuthorizationGuard } from './guards/authorization/authorization.guard';
 import { Role } from 'src/global/enum/role.enum';
+import { ChangePasswordDTO } from './dto/change-password.dto';
+import { UpdateProfileDTO } from './dto/update-profile.dto';
 
 @Controller('api/auth')
 export class AuthController {
@@ -86,13 +88,25 @@ export class AuthController {
     return this.authService.logout(session);
   }
 
+  @Patch('changePassword')
+  @UseGuards(AuthenticationGuard)
+  changePassword(
+    @Body() changePasswordDTO: ChangePasswordDTO,
+    @Req() { user },
+  ) {
+    return this.authService.changePassword(changePasswordDTO, user);
+  }
+
+  @Patch('updateProfile')
+  @UseGuards(AuthenticationGuard)
+  updateProfile(@Body() updateProfileDTO: UpdateProfileDTO, @Req() { user }) {
+    return this.authService.updateProfile(updateProfileDTO, user);
+  }
+
   @Get('onlyAdmin')
   @Roles(Role.admin, Role.employee)
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   onlyAdmin() {
     return 'You are admin or principal.';
   }
-
-  // change password
-  // update profile
 }

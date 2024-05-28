@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   HttpStatus,
   Injectable,
@@ -14,6 +15,8 @@ import { JwtService } from './jwt.service';
 import * as UAParser from 'ua-parser-js';
 import { User } from '@prisma/client';
 import { ResponseDeleteDTO } from 'src/global/dto/response.delete.dto';
+import { ChangePasswordDTO } from './dto/change-password.dto';
+import { UpdateProfileDTO } from './dto/update-profile.dto';
 
 @Injectable()
 export class AuthService {
@@ -288,6 +291,79 @@ export class AuthService {
         statusCode: HttpStatus.OK,
       };
     } catch (error) {
+      throw error;
+    }
+  }
+
+  async changePassword(
+    changePassword: ChangePasswordDTO,
+    user: User,
+  ): Promise<ResponseDeleteDTO> {
+    try {
+      // check comfirm password is valid
+      if (changePassword.newPassword !== changePassword.confirmPassword)
+        throw new BadRequestException('Check you confirm password');
+      // check is user is valid
+      const oldUser = await this.prisma.user.findUnique({
+        where: { id: user.id },
+      });
+      if (!oldUser) throw new UnauthorizedException();
+      // compare password
+      const passwordMatch = await bcrypt.compare(
+        changePassword.currentPassword,
+        oldUser.password,
+      );
+      if (!passwordMatch)
+        throw new UnauthorizedException('Invalid current password');
+      // hash password
+      const hashedPassword = await bcrypt.hash(changePassword.newPassword, 10);
+      // handle change password
+      await this.prisma.user.update({
+        where: { id: oldUser.id },
+        data: {
+          password: hashedPassword,
+        },
+      });
+      // response back
+      return {
+        message: 'Changed password succesfully!',
+        statusCode: HttpStatus.OK,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateProfile(
+    data: UpdateProfileDTO,
+    user: User,
+  ): Promise<ResponseDeleteDTO> {
+    try {
+      // check is user is valid
+      const oldUser = await this.prisma.user.findUnique({
+        where: { id: user.id },
+      });
+      if (!oldUser) throw new UnauthorizedException();
+      // start update
+      await this.prisma.user.update({
+        where: {
+          id: oldUser.id,
+        },
+        data: {
+          name: data.name,
+          email: data.email,
+          gender: data.gender,
+        },
+      });
+      // response back
+      return {
+        message: 'Updated succesfully!',
+        statusCode: HttpStatus.OK,
+      };
+    } catch (error) {
+      //check if duplicate
+      if (error.code === 'P2002')
+        throw new ConflictException('Email already exists');
       throw error;
     }
   }
