@@ -9,5 +9,6 @@ import { FileUploadModule } from 'src/file/file-upload.module';
   imports: [FileUploadModule],
   controllers: [AuthController],
   providers: [AuthService, PrismaService, JwtService],
+  exports: [JwtService, PrismaService],
 })
 export class AuthModule {}

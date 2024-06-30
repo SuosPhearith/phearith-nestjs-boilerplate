@@ -9,6 +9,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { Gender } from '../enum/gender.enum';
+import { Role } from 'src/global/enum/role.enum';
 
 export class CreateAuthDto {
   @IsNotEmpty()
@@ -23,19 +24,19 @@ export class CreateAuthDto {
 
   @IsNotEmpty()
   @IsString()
-  @MinLength(8)
+  @MinLength(6)
   @MaxLength(50)
   readonly password: string;
 
   @IsNotEmpty()
   @IsNumber()
-  readonly roleId: number;
+  readonly roleId: number = Role.user;
 
   @IsOptional()
   @IsString()
   readonly avatar?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsEnum(Gender)
-  readonly gender: Gender;
+  readonly gender?: Gender;
 }

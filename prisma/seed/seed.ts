@@ -17,7 +17,6 @@ const prisma = new PrismaClient();
 
 async function main() {
   //::================================>>Delete data<<=================================::
-  await prisma.log.deleteMany();
   await prisma.userSession.deleteMany();
   await prisma.user.deleteMany();
   await prisma.role.deleteMany();

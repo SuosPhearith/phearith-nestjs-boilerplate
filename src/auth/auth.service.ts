@@ -24,7 +24,6 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-    private fileUplaodService: FileUploadService,
     private readonly fileUploadService: FileUploadService,
   ) {}
   async signUp(
@@ -49,8 +48,9 @@ export class AuthService {
       return response;
     } catch (error) {
       //check if duplicate
-      if (error.code === 'P2002')
+      if (error.code === 'P2002') {
         throw new ConflictException('Email already exists');
+      }
       throw error;
     }
   }
@@ -66,12 +66,12 @@ export class AuthService {
         },
       });
       // return user;
-      if (!user) throw new UnauthorizedException('Invalid email');
+      if (!user) throw new BadRequestException('Invalid email');
       //check account is valid
-      if (!user.status) throw new UnauthorizedException();
+      if (!user.status) throw new BadRequestException();
       // compare password
       const passwordMatch = await bcrypt.compare(password, user.password);
-      if (!passwordMatch) throw new UnauthorizedException('Invalid password');
+      if (!passwordMatch) throw new BadRequestException('Invalid password');
       // remove password
       user.password = undefined;
       // store log
@@ -80,14 +80,6 @@ export class AuthService {
       const result = parser.getResult();
       const browser = result.browser.name;
       const device = `${result.os.name}-${result.os.version}`;
-      // start store log
-      await this.prisma.log.create({
-        data: {
-          userId: user.id,
-          device,
-          browser,
-        },
-      });
       // start create user session
       const { sessionToken } = await this.prisma.userSession.create({
         data: {
@@ -149,46 +141,6 @@ export class AuthService {
     }
   }
 
-  async getLog(
-    page: number = 1,
-    pageSize: number = 10,
-    user: User,
-  ): Promise<any> {
-    try {
-      // Calculate the offset for pagination
-      const skip = (page - 1) * pageSize;
-
-      // Build the search criteria conditionally
-      const where: any = {
-        userId: user.id,
-      };
-
-      // Get the total count of users matching the criteria
-      const totalCount = await this.prisma.log.count({ where });
-
-      // Calculate total pages
-      const totalPages = Math.ceil(totalCount / pageSize);
-
-      // Get the users with pagination and search criteria
-      const data = await this.prisma.log.findMany({
-        where,
-        skip,
-        take: +pageSize,
-      });
-
-      // Return the response with pagination details
-      return {
-        data,
-        totalCount: +totalCount,
-        totalPages: +totalPages,
-        currentPage: +page,
-        pageSize: +pageSize,
-      };
-    } catch (error) {
-      throw error;
-    }
-  }
-
   async getSession(
     page: number = 1,
     pageSize: number = 10,
@@ -242,6 +194,12 @@ export class AuthService {
         where: { id: user.id },
         data: {
           session: user.session + 1,
+        },
+      });
+      // remove all session
+      await this.prisma.userSession.deleteMany({
+        where: {
+          userId: user.id,
         },
       });
       // response back
@@ -310,14 +268,14 @@ export class AuthService {
       const oldUser = await this.prisma.user.findUnique({
         where: { id: user.id },
       });
-      if (!oldUser) throw new UnauthorizedException();
+      if (!oldUser) throw new BadRequestException();
       // compare password
       const passwordMatch = await bcrypt.compare(
         changePassword.currentPassword,
         oldUser.password,
       );
       if (!passwordMatch)
-        throw new UnauthorizedException('Invalid current password');
+        throw new BadRequestException('Invalid current password');
       // hash password
       const hashedPassword = await bcrypt.hash(changePassword.newPassword, 10);
       // handle change password
@@ -346,7 +304,7 @@ export class AuthService {
       const oldUser = await this.prisma.user.findUnique({
         where: { id: user.id },
       });
-      if (!oldUser) throw new UnauthorizedException();
+      if (!oldUser) throw new BadRequestException();
       // start update
       await this.prisma.user.update({
         where: {
@@ -379,7 +337,7 @@ export class AuthService {
       const oldUser = await this.prisma.user.findUnique({
         where: { id: user.id },
       });
-      if (!oldUser) throw new UnauthorizedException();
+      if (!oldUser) throw new BadRequestException();
       // start update
       await this.prisma.user.update({
         where: {
@@ -392,6 +350,28 @@ export class AuthService {
       // response back
       return {
         message: 'Updated succesfully!',
+        statusCode: HttpStatus.OK,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async deleteAccount(user: User) {
+    try {
+      // validate before delete
+      if (user.id === 1) {
+        throw new BadRequestException('Can not delete super admin account');
+      }
+      // start delete account
+      await this.prisma.user.delete({
+        where: {
+          id: user.id,
+        },
+      });
+      // response back
+      return {
+        message: 'Deleted succesfully!',
         statusCode: HttpStatus.OK,
       };
     } catch (error) {

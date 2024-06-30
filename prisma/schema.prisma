@@ -23,25 +23,15 @@ model User {
   name        String
   email       String        @unique
   password    String
-  role        Role          @relation(fields: [roleId], references: [id])
+  role        Role          @relation(fields: [roleId], references: [id], onDelete: Cascade)
   roleId      Int
   status      Boolean       @default(true)
   avatar      String?
-  gender      Gender
+  gender      Gender?
   session     Int           @default(1)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
-  Log         Log[]
   UserSession UserSession[]
-}
-
-model Log {
-  id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    Int
-  device    String
-  browser   String
-  createdAt DateTime @default(now())
 }
 
 model UserSession {
@@ -52,5 +42,5 @@ model UserSession {
   browser      String
   createdAt    DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -31,18 +31,18 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('signUp')
-  create(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.signUp(createAuthDto);
+  async create(@Body() createAuthDto: CreateAuthDto) {
+    return await this.authService.signUp(createAuthDto);
   }
 
   @Post('signIn')
-  signIn(@Body() singInDTO: SingInDTO) {
-    return this.authService.signIn(singInDTO);
+  async signIn(@Body() singInDTO: SingInDTO) {
+    return await this.authService.signIn(singInDTO);
   }
 
   @Post('refreshToken')
-  refreshToken(@Body() token: any) {
-    return this.authService.refreshToken(token.refreshToken);
+  async refreshToken(@Body() token: any) {
+    return await this.authService.refreshToken(token.refreshToken);
   }
 
   @Get('me')
@@ -51,62 +51,56 @@ export class AuthController {
     return user;
   }
 
-  @Get('getLog/getAll')
-  @Roles(Role.admin, Role.employee)
-  @UseGuards(AuthenticationGuard, AuthorizationGuard)
-  getLog(
-    @Query('page') page: number = 1,
-    @Query('pageSize') pageSize: number = 10,
-    @Req() { user },
-  ) {
-    return this.authService.getLog(page, pageSize, user);
-  }
-
   @Get('getSession/getAll')
-  @Roles(Role.admin, Role.employee)
-  @UseGuards(AuthenticationGuard, AuthorizationGuard)
-  getSession(
+  @UseGuards(AuthenticationGuard)
+  async getSession(
     @Query('page') page: number = 1,
     @Query('pageSize') pageSize: number = 10,
     @Req() { user },
   ) {
-    return this.authService.getSession(page, pageSize, user);
+    return await this.authService.getSession(page, pageSize, user);
   }
 
   @Patch('account/logoutAllDevices')
-  @Roles(Role.admin, Role.employee)
-  @UseGuards(AuthenticationGuard, AuthorizationGuard)
-  logoutAllDevices(@Req() { user }) {
-    return this.authService.logoutAllDevices(user);
+  @UseGuards(AuthenticationGuard)
+  async logoutAllDevices(@Req() { user }) {
+    return await this.authService.logoutAllDevices(user);
+  }
+
+  @Delete('deleteAccount')
+  @UseGuards(AuthenticationGuard)
+  async deleteAccount(@Req() { user }) {
+    return await this.authService.deleteAccount(user);
   }
 
   @Delete('account/logoutDevice/:sessionToken')
-  @Roles(Role.admin, Role.employee)
-  @UseGuards(AuthenticationGuard, AuthorizationGuard)
-  logoutDevice(@Param('sessionToken') sessionToken: string) {
-    return this.authService.logoutDevice(sessionToken);
+  @UseGuards(AuthenticationGuard)
+  async logoutDevice(@Param('sessionToken') sessionToken: string) {
+    return await this.authService.logoutDevice(sessionToken);
   }
 
   @Delete('logout')
-  @Roles(Role.admin, Role.employee)
-  @UseGuards(AuthenticationGuard, AuthorizationGuard)
-  logout(@Req() { session }) {
-    return this.authService.logout(session);
+  @UseGuards(AuthenticationGuard)
+  async logout(@Req() { session }) {
+    return await this.authService.logout(session);
   }
 
   @Patch('changePassword')
   @UseGuards(AuthenticationGuard)
-  changePassword(
+  async changePassword(
     @Body() changePasswordDTO: ChangePasswordDTO,
     @Req() { user },
   ) {
-    return this.authService.changePassword(changePasswordDTO, user);
+    return await this.authService.changePassword(changePasswordDTO, user);
   }
 
   @Patch('updateProfile')
   @UseGuards(AuthenticationGuard)
-  updateProfile(@Body() updateProfileDTO: UpdateProfileDTO, @Req() { user }) {
-    return this.authService.updateProfile(updateProfileDTO, user);
+  async updateProfile(
+    @Body() updateProfileDTO: UpdateProfileDTO,
+    @Req() { user },
+  ) {
+    return await this.authService.updateProfile(updateProfileDTO, user);
   }
 
   @Post('uploadAvatar')
@@ -120,9 +114,23 @@ export class AuthController {
   }
 
   @Get('onlyAdmin')
-  @Roles(Role.admin, Role.employee)
+  @Roles(Role.admin)
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   onlyAdmin() {
-    return 'You are admin or principal.';
+    return 'You are admin!';
+  }
+
+  @Get('onlyUser')
+  @Roles(Role.user)
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  onlyUser() {
+    return 'You are user!';
+  }
+
+  @Get('bothAdminAndUser')
+  @Roles(Role.admin, Role.user)
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  bothAdminAndUser() {
+    return 'You are admin or user!';
   }
 }
